@@ -12,7 +12,7 @@ service:
 
 containers:
   backend:
-    image: nginxdemos/hello:latest
+    image: registry.humanitec.io/oracle-sandbox/app:latest
 resources:
   "analytics":
     type: postgres
