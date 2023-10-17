@@ -81,7 +81,7 @@ jobs:
           organization: ${{ secrets.HUMANITEC_ORG }}
           image-name: app
           context: ./app
-          tag: ${{ steps.get_version.outputs.VERSION }}
+          #tag: ${{ steps.get_version.outputs.VERSION }}
 
       # dev env
       - name: Deploy to dev
