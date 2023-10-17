@@ -21,16 +21,16 @@ jobs:
 
 
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-2
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
 
       - uses: actions/checkout@v3
 
@@ -70,7 +70,8 @@ jobs:
           terraform apply -auto-approve
     
       # docker, and set the $IMAGE_NAME and use overrides later
-      - name: Build and Push to AWS ECR
+      - name: Build and Push to registry.humanitec.io
+        id: build-step
         uses: humanitec/build-push-to-humanitec@v1
         with:
           humanitec-token: ${{ secrets.HUMANITEC_TOKEN }}
@@ -78,18 +79,17 @@ jobs:
           image-name: app
           context: ./app
           tag: ${{ steps.get_version.outputs.VERSION }}
-          #external-registry-url: 094812427315.dkr.ecr.us-east-2.amazonaws.com/humanitec-eval
 
       # dev env
       - run: |
           cd score
           chmod +x deploy_dev.sh
-          IMAGE_NAME="nginxdemos/hello:latest" envsubst < overrides.debug.yaml.example > overrides.debug.yaml
+          IMAGE_NAME="${{ steps.build-step.outputs.image }}" envsubst < overrides.debug.yaml.example > overrides.debug.yaml
           HUMANITEC_ENVIRONMENT=development ./deploy_dev.sh
 
       # prod env
       - run: |
           cd score
           chmod +x deploy_prod.sh
-          IMAGE_NAME="nginxdemos/hello:latest" envsubst < overrides.debug.yaml.example > overrides.debug.yaml
+          IMAGE_NAME="${{ steps.build-step.outputs.image }}" envsubst < overrides.debug.yaml.example > overrides.debug.yaml
           HUMANITEC_ENVIRONMENT=production HUMANITEC_FROM_ENVIRONMENT=development ./deploy_prod.sh
